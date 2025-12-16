@@ -3,26 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulk Email Sender</title>
+    <title>Bulk Email Sender Portal</title>
     <style>
-        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f4f9; }
-        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 400px; }
-        h2 { text-align: center; color: #333; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; background-color: #ff6f61; color: white; border: none; padding: 12px; font-size: 16px; border-radius: 4px; cursor: pointer; transition: 0.3s; }
-        button:hover { background-color: #e65b50; }
-        .message { margin-top: 15px; text-align: center; font-size: 14px; }
-        .success { color: green; }
-        .error { color: red; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #e9ecef; margin: 0; }
+        .container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 400px; }
+        
+        /* Utility to hide sections */
+        .hidden { display: none; }
+
+        /* Header Layout for Title and Logout */
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h2 { margin: 0; color: #333; font-size: 24px; }
+        
+        p.subtitle { text-align: center; color: #666; font-size: 14px; margin-bottom: 20px; margin-top: 10px; }
+
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #495057; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 5px; box-sizing: border-box; font-size: 14px; transition: border-color 0.3s; }
+        input:focus, select:focus { border-color: #ff6f61; outline: none; }
+        
+        /* Primary Button (Start Campaign / Login) */
+        button.primary-btn { width: 100%; background-color: #ff6f61; color: white; border: none; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: background-color 0.3s; }
+        button.primary-btn:hover { background-color: #e65b50; }
+
+        /* Logout Button Style */
+        button.logout-btn { background-color: #6c757d; color: white; border: none; padding: 6px 12px; font-size: 13px; border-radius: 4px; cursor: pointer; transition: background-color 0.3s; }
+        button.logout-btn:hover { background-color: #5a6268; }
+        
+        .message { margin-top: 20px; text-align: center; font-size: 14px; padding: 10px; border-radius: 4px; }
+        .success { color: #155724; background-color: #d4edda; border: 1px solid #c3e6cb; }
+        .error { color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; }
+
+        #loginError { color: red; text-align: center; margin-top: 10px; font-size: 13px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Bulk Mail Setup</h2>
+<!-- LOGIN SECTION -->
+<div class="container" id="loginSection">
+    <div style="text-align: center; margin-bottom: 20px;">
+        <h2>Login</h2>
+    </div>
+    <p class="subtitle">Please authenticate to access the campaign manager.</p>
+    <form id="loginForm">
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Enter username" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter password" required>
+        </div>
+        <button type="submit" class="primary-btn">Login</button>
+        <div id="loginError"></div>
+    </form>
+</div>
+
+<!-- MAIN FORM SECTION (Hidden by default) -->
+<div class="container hidden" id="mainSection">
+    <!-- Header with Title and Logout Button -->
+    <div class="header-row">
+        <h2>Bulk Mail Setup</h2>
+        <button id="logoutBtn" class="logout-btn">Logout</button>
+    </div>
+
     <form id="emailForm">
+        
+        <!-- Sender Selection (Dynamic Webhook) -->
+        <div class="form-group">
+            <label for="senderEmail">Select Sender Email</label>
+            <select id="senderEmail" required>
+                <option value="" disabled selected>Choose a sender...</option>
+                <option value="https://n8n.srv898271.hstgr.cloud/webhook/send-bulk-mail-mahek-founders">Mahek@thefounders.co.in</option>
+                <option value="https://n8n.srv898271.hstgr.cloud/webhook/send-bulk-mail-varun-founders">Varun@thefounders.co.in</option>
+                <option value="https://n8n.srv898271.hstgr.cloud/webhook/send-bulk-mail-mahek-think">Mahek@thinkuntapd.com</option>
+                <option value="https://n8n.srv898271.hstgr.cloud/webhook/send-bulk-mail-shivani-founders">Shivani@thinkuntapd.com</option>
+            </select>
+        </div>
+
         <!-- File Upload -->
         <div class="form-group">
             <label for="excelFile">Upload Excel File</label>
@@ -47,12 +105,48 @@
             </select>
         </div>
 
-        <button type="submit" id="submitBtn">Start Campaign</button>
+        <button type="submit" id="submitBtn" class="primary-btn">Start Campaign</button>
     </form>
-    <div id="responseMessage" class="message"></div>
+    <div id="responseMessage" class="message hidden"></div>
 </div>
 
 <script>
+    // --- 1. CONFIGURATION ---
+    const AUTH_USER = "admin";
+    const AUTH_PASS = "admin123";
+
+    // --- 2. LOGIN LOGIC ---
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const userInput = document.getElementById('username').value;
+        const passInput = document.getElementById('password').value;
+        const errorDiv = document.getElementById('loginError');
+
+        if (userInput === AUTH_USER && passInput === AUTH_PASS) {
+            // Success: Switch screens
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('mainSection').classList.remove('hidden');
+            errorDiv.innerText = ""; // Clear errors
+        } else {
+            errorDiv.innerText = "Invalid credentials. Please try again.";
+        }
+    });
+
+    // --- 3. LOGOUT LOGIC ---
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+        // Switch screens back
+        document.getElementById('mainSection').classList.add('hidden');
+        document.getElementById('loginSection').classList.remove('hidden');
+        
+        // Reset all forms and messages
+        document.getElementById('loginForm').reset();
+        document.getElementById('emailForm').reset();
+        document.getElementById('responseMessage').classList.add('hidden');
+        document.getElementById('responseMessage').innerText = "";
+    });
+
+    // --- 4. FORM SUBMISSION LOGIC ---
     document.getElementById('emailForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
@@ -61,43 +155,43 @@
         const fileInput = document.getElementById('excelFile');
         const waitTime = document.getElementById('waitTime').value;
         const template = document.getElementById('template').value;
+        const webhookUrl = document.getElementById('senderEmail').value;
 
         if (fileInput.files.length === 0) {
             alert("Please upload a file.");
             return;
         }
 
-        // Prepare FormData
         const formData = new FormData();
-        formData.append('data', fileInput.files[0]); // The file
-        formData.append('waitTime', waitTime);       // The text field
-        formData.append('template', template);       // The text field
+        formData.append('data', fileInput.files[0]);
+        formData.append('waitTime', waitTime);
+        formData.append('template', template);
 
-        // UI Updates
         submitBtn.disabled = true;
         submitBtn.innerText = "Sending...";
-        messageDiv.innerText = "";
+        messageDiv.classList.add('hidden');
+        messageDiv.className = "message";
 
         try {
-            // Webhook URL
-            const webhookUrl = 'https://n8n.srv898271.hstgr.cloud/webhook/send-bulk-mail';
-
             const response = await fetch(webhookUrl, {
                 method: 'POST',
                 body: formData
             });
 
+            messageDiv.classList.remove('hidden');
+
             if (response.ok) {
                 messageDiv.className = "message success";
-                messageDiv.innerText = "Data submitted successfully! Workflow started.";
+                messageDiv.innerText = "Data submitted successfully! Campaign started.";
                 document.getElementById('emailForm').reset();
             } else {
                 throw new Error('Server returned ' + response.status);
             }
         } catch (error) {
             console.error('Error:', error);
+            messageDiv.classList.remove('hidden');
             messageDiv.className = "message error";
-            messageDiv.innerText = "Error submitting form. Check console for details.";
+            messageDiv.innerText = "Error submitting form. Check console.";
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerText = "Start Campaign";
